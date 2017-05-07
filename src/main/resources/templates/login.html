@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <title>Login page</title>
+    <!-- Po tozi nachin se reference-vat external file-ove -->
+    <link href="../static/css/loginCSS.css" th:href="@{resources/css/loginCSS.css}" rel="stylesheet" />
+  </head>
+  <body>
+    <h1>Login page</h1>
+    <p th:if="${param.error}" class="error">Wrong user or password</p>
+    <p th:if="${param.success}" class="success">Logged out successfully!</p>
+    <form th:action="@{/login}" method="post">
+      <label for="username">Username</label>:
+      <input type="text" id="username" name="username" autofocus="autofocus" /> <br />
+      <label for="password">Password</label>:
+      <input type="password" id="password" name="password" /> <br />
+      <input type="submit" value="Log in" />
+    </form>
+    <form th:action="@{/registration}" method="get">
+    	<input type="submit" value="Register"/>
+    </form>
+  </body>
+</html>
