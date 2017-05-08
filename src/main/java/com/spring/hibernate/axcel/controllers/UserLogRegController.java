@@ -10,7 +10,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.spring.hibernate.axcel.models.User;
 import com.spring.hibernate.axcel.services.UserService;
@@ -54,12 +54,13 @@ public class UserLogRegController {
 	}
 
 	@RequestMapping(value="/registration", method=RequestMethod.POST)
-	public String register(@ModelAttribute("user") User user, BindingResult bindingRes) {
+	public String register(@ModelAttribute("user") User user, BindingResult bindingRes, RedirectAttributes redirAttr) {
 		userValidator.validate(user, bindingRes);
 		if(bindingRes.hasErrors()) {
 			return "registration";
 		}
 		userService.save(user);
+		redirAttr.addFlashAttribute("message", "Account successfully created!");
 		return "redirect:/login";
 	}
 }

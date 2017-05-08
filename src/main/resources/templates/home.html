@@ -2,11 +2,22 @@
 <html xmlns:th="http://www.thymeleaf.org">
   <head>
     <title>Home</title>
+    <link href="../static/css/homeCSS.css" th:href="@{/css/homeCSS.css}" rel="stylesheet" />
   </head>
   <body>
-    <h1>Welcome <span th:text="${user.name}"></span>!</h1>
-    <form th:action="@{/logout}" method="post">
-    	<input type="submit" value="Log Out"/>
-    </form>
+  	<div id="userPanel">
+	    <h1>Welcome <span th:text="${user.name}"></span>!</h1>
+	   	<form id="logoutForm" th:action="@{/logout}" method="post">
+	   		<input type="submit" value="Log Out"/>
+	    </form>
+	    <p th:text="${message}"></p>
+	    <form id="uploadForm" th:action="@{/upload}" method="post" enctype="multipart/form-data">
+	    	<input type="file" name="file" accept=".xls,.xlsx" />
+	    	<input type="submit" name="uploadButton" value="Upload"/>
+	    </form>
+	    <form th:action="@{/download}" method="get">
+	    	<input type="submit" value="Download"/>
+	    </form>
+	</div>
   </body>
 </html>

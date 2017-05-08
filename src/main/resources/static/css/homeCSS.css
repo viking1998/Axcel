@@ -1,0 +1,12 @@
+@CHARSET "UTF-8";
+#userPanel h1,  #userPanel form, #userPanel p {
+	display: inline;
+}
+
+#userPanel p, #uploadForm {
+	margin-left: 20px;
+}
+
+#logoutForm {
+	margin-left: 10px;
+}
