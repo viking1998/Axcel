@@ -9,21 +9,21 @@ import java.io.InputStream;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
 import org.springframework.util.FileCopyUtils;
@@ -93,76 +93,87 @@ public class FileService {
 			
 			Sheet sheet = workbook.getSheetAt(0);
 			
-			Iterator<Row> rowIterator = sheet.iterator();
-			int currentRow = 0;
-			while(rowIterator.hasNext()) {
-				Row row = rowIterator.next();
-				Iterator<Cell> cellIterator = row.cellIterator();
+			for(int currentRow = sheet.getFirstRowNum(); currentRow <= sheet.getLastRowNum(); currentRow++) {
+				XSSFRow row = (XSSFRow) sheet.getRow(currentRow);
 				mySheet.put(currentRow, new ArrayList<MyCell>());
-				while(cellIterator.hasNext()) {
-					Cell cell = cellIterator.next();
-					MyCell myCell = new MyCell();
-					
-					XSSFCellStyle cellStyle = (XSSFCellStyle) cell.getCellStyle();
-					XSSFColor bgColor = cellStyle.getFillBackgroundColorColor();
-					if(bgColor != null) {
-						byte[] rgbColor = bgColor.getRGB();
-						myCell.setBgColor("rgb(" 
-											+ (rgbColor[0] < 0 ? (rgbColor[0]+0xff) : rgbColor[0]) + ","
-											+ (rgbColor[1] < 0 ? (rgbColor[1]+0xff) : rgbColor[1]) + ","
-											+ (rgbColor[2] < 0 ? (rgbColor[2]+0xff) : rgbColor[2]) + ")");
-					}
-					XSSFFont font = cellStyle.getFont();
-					myCell.setTextSize(font.getFontHeightInPoints()+"");
-					if(font.getBold()) {
-						myCell.setTextWeight("bold");
-					}
-					else {
-						myCell.setTextWeight("normal");
-					}
-					
-					if(font.getItalic()) {
-						myCell.setFontStyle("italic");
-					}
-					else {
-						myCell.setFontStyle("normal");
-					}
-					
-					 if(font.getUnderline() == Font.U_SINGLE) {
-						myCell.setTextDecoration("underline");
-					}
-					 else {
-						 myCell.setTextDecoration("none");
-					 }
-					
-					switch(cell.getCellTypeEnum()) {
-						case BOOLEAN: 
-							myCell.setContent(cell.getBooleanCellValue()+"");
-							break;
-						case STRING:
-							myCell.setContent(cell.getRichStringCellValue().getString());
-							break;
-						case NUMERIC:
-							if(DateUtil.isCellDateFormatted(cell)) {
-								myCell.setContent(cell.getDateCellValue()+"");
+				if(row != null) {
+					for(int currentCell = 0; currentCell < row.getLastCellNum(); currentCell++) {
+						MyCell myCell = new MyCell();
+						XSSFCell cell = row.getCell(currentCell);
+						if(cell != null) {
+							XSSFCellStyle cellStyle = (XSSFCellStyle) cell.getCellStyle();
+							XSSFColor bgColor = cellStyle.getFillBackgroundColorColor();
+							if(bgColor != null) {
+								byte[] rgbColor = bgColor.getRGB();
+								myCell.setBgColor("rgb(" 
+													+ (rgbColor[0] < 0 ? (rgbColor[0]+0xff) : rgbColor[0]) + ","
+													+ (rgbColor[1] < 0 ? (rgbColor[1]+0xff) : rgbColor[1]) + ","
+													+ (rgbColor[2] < 0 ? (rgbColor[2]+0xff) : rgbColor[2]) + ")");
+							}
+							XSSFFont font = cellStyle.getFont();
+							myCell.setTextSize(font.getFontHeightInPoints()+"");
+							if(font.getBold()) {
+								myCell.setTextWeight("bold");
 							}
 							else {
-								myCell.setContent(cell.getNumericCellValue()+"");
+								myCell.setTextWeight("normal");
 							}
-							break;
-						case FORMULA:
-							myCell.setContent(cell.getCellFormula());
-							break;
-						default: 
+							
+							if(font.getItalic()) {
+								myCell.setFontStyle("italic");
+							}
+							else {
+								myCell.setFontStyle("normal");
+							}
+							
+							 if(font.getUnderline() == Font.U_SINGLE) {
+								myCell.setTextDecoration("underline");
+							}
+							else {
+								myCell.setTextDecoration("none");
+							}
+							
+							switch(cell.getCellTypeEnum()) {
+								case BOOLEAN: 
+									myCell.setContent(cell.getBooleanCellValue()+"");
+									break;
+								case STRING:
+									myCell.setContent(cell.getRichStringCellValue().getString());
+									break;
+								case NUMERIC:
+									if(DateUtil.isCellDateFormatted(cell)) {
+										myCell.setContent(cell.getDateCellValue()+"");
+									}
+									else {
+										myCell.setContent(cell.getNumericCellValue()+"");
+									}
+									break;
+								case FORMULA:
+									myCell.setContent(cell.getCellFormula());
+									break;
+								default: 
+									myCell.setContent("");
+									break;
+							}
+						}
+						else {
 							myCell.setContent("");
-							break;
+						}
+						mySheet.get(currentRow).add(myCell);
 					}
-					mySheet.get(currentRow).add(myCell);
 				}
-				currentRow++;
 			}
-			fInStream.close();
-			workbook.close();
+			int maxNrCols = mySheet.values().stream()
+			          .mapToInt(List::size)
+			          .max()
+			          .orElse(0);
+
+			        mySheet.values().stream()
+			          .filter(ls -> ls.size() < maxNrCols)
+			          .forEach(ls -> {
+			              IntStream.range(ls.size(), maxNrCols)
+			                .forEach(i -> ls.add(new MyCell("")));
+			});
 			return mySheet;
 		}
 		return null;
