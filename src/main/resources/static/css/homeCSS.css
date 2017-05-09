@@ -4,9 +4,14 @@
 }
 
 #userPanel p, #uploadForm {
-	margin-left: 20px;
+	margin-left: 1px;
 }
 
-#logoutForm {
-	margin-left: 10px;
+input[type=submit]{
+	border: none;
+	cursor: pointer;
+	color: white;
+	background-color: #00cc07;
+	border-radius: 15px;
+	padding: 8px;
 }
