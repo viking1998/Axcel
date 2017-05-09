@@ -10,3 +10,27 @@
 #logoutForm {
 	margin-left: 10px;
 }
+
+table, td {
+	border: 1px solid black;
+}
+
+thead {
+	text-align: center;
+}
+
+table {
+	width: 100%;
+	height: 100%;
+	table-layout: fixed;
+}
+
+.numberColumn {
+	width: 2%;
+	text-align: center;
+}
+
+td input {
+	width: 100%;
+	box-sizing: border-box;
+}
