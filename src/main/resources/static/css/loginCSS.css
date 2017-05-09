@@ -1,1 +1,33 @@
 @CHARSET "UTF-8";
+
+form {
+	padding: 16px;
+}
+
+input[type=text], input[type=password] {
+    width: 50%;
+    padding: 5px 20px;
+    margin: 8px 0;
+    display: block;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #2eb427;
+    color: white;
+    padding: 14px 20px;
+    margin: 2px 0;
+    border: none;
+    cursor: pointer;
+    width: 50%;
+	display: block;
+}
+
+#create {
+	 background-color: #1bc0bd;
+}
+
+button:hover {
+	opacity: 0.9;
+}
