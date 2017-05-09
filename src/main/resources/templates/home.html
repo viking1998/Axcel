@@ -46,5 +46,34 @@
 			</tbody>
 		</table>
 	</div>
+	<div id="globalTable">
+		<table>
+			<thead>
+				<tr>
+					<td class="numberColumn">No.</td>
+					<th:block th:if="${excelSheet}" th:each="row : ${excelSheet}">
+						<td th:each="cell,cellIterStatus : ${row.value}" 
+						th:text="${cellIterStatus.count}"></td>
+					</th:block>
+				</tr>
+			</thead>
+			<tbody th:if="${excelSheet}">
+				<tr th:each="row,rowIterStatus : ${excelSheet}">
+					<td class="numberColumn" th:text="${rowIterStatus.count}"></td>
+					<td th:each="cell,cellIterStatus : ${row.value}">
+						<span >
+							<input th:style="'background-color:'+${cell.bgColor}
+											+';color:'+${cell.textColor}
+											+';text-decoration:'+${cell.textDecoration}
+											+';font-style:'+${cell.fontStyle}
+											+';font-weight:'+${cell.textWeight}+';font-size:'+${cell.textSize}+'pt;'" 
+									type="text" name="${rowIterStatus.count} + '-' + ${cellIterStatus.count}" 
+									th:value="${cell.content}" />
+						</span>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
   </body>
 </html>

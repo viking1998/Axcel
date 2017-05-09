@@ -7,32 +7,56 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.stream.IntStream;
 
-import javax.servlet.ServletContextListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.spring.hibernate.axcel.models.MyCell;
+
 @Component
 public class FileService {
 	
-	private String saveLocation;
+	private String fileLocation;
+	private String fileName;
 	
+	public String getFileName() {
+		return fileName;
+	}
+
 	public String getSaveLocation() {
-		return saveLocation;
+		return fileLocation;
 	}
 
 	public void setSaveLocation(String saveLocation) {
-		this.saveLocation = saveLocation;
+		this.fileLocation = saveLocation;
 	}
 
 	public void saveFileLocally(MultipartFile fileToSave) throws IOException {
+		fileName = fileToSave.getOriginalFilename();
+		String currDirAbsPath = new File(".").getAbsolutePath();
+		String saveDirAbsPath = currDirAbsPath.substring(0, currDirAbsPath.length()-1) 
+								+ "\\src\\main\\resources\\uploads\\";
+		fileLocation = saveDirAbsPath + fileName;
 		InputStream in = fileToSave.getInputStream();
-	    String absolutePath = new File(saveLocation).getAbsolutePath();
-	    FileOutputStream f = new FileOutputStream(absolutePath);
+	    FileOutputStream f = new FileOutputStream(fileLocation);
 	    int ch = 0;
 	    while ((ch = in.read()) != -1) {
 	        f.write(ch);
@@ -41,8 +65,12 @@ public class FileService {
 	    f.close();
 	}
 	
+	public void saveChanges() {
+		
+	}
+	
 	public void prepareFileForDownload(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		File downloadFile = new File(ServletContextListener.class.getClassLoader().getResource("uploads/bla.xlsx").getPath());
+		File downloadFile = new File(fileLocation);
 		String mimeType = URLConnection.guessContentTypeFromName(downloadFile.getName());
 		if(mimeType == null) {
 			mimeType = "application/octet-stream";
@@ -54,6 +82,101 @@ public class FileService {
 		
 		InputStream inStream = new BufferedInputStream(new FileInputStream(downloadFile));
 		FileCopyUtils.copy(inStream, resp.getOutputStream());
+	}
+	
+	public HashMap<Integer, List<MyCell>> readExcelFile() throws IOException, InvalidFormatException {
+		if(fileName.endsWith(".xlsx")) {
+			HashMap<Integer, List<MyCell>> mySheet = new HashMap<>();
+			
+			FileInputStream fInStream = new FileInputStream(new File(fileLocation));
+			XSSFWorkbook workbook = new XSSFWorkbook(fInStream);
+			
+			Sheet sheet = workbook.getSheetAt(0);
+			
+			for(int currentRow = sheet.getFirstRowNum(); currentRow <= sheet.getLastRowNum(); currentRow++) {
+				XSSFRow row = (XSSFRow) sheet.getRow(currentRow);
+				mySheet.put(currentRow, new ArrayList<MyCell>());
+				if(row != null) {
+					for(int currentCell = 0; currentCell < row.getLastCellNum(); currentCell++) {
+						MyCell myCell = new MyCell();
+						XSSFCell cell = row.getCell(currentCell);
+						if(cell != null) {
+							XSSFCellStyle cellStyle = (XSSFCellStyle) cell.getCellStyle();
+							XSSFColor bgColor = cellStyle.getFillBackgroundColorColor();
+							if(bgColor != null) {
+								byte[] rgbColor = bgColor.getRGB();
+								myCell.setBgColor("rgb(" 
+													+ (rgbColor[0] < 0 ? (rgbColor[0]+0xff) : rgbColor[0]) + ","
+													+ (rgbColor[1] < 0 ? (rgbColor[1]+0xff) : rgbColor[1]) + ","
+													+ (rgbColor[2] < 0 ? (rgbColor[2]+0xff) : rgbColor[2]) + ")");
+							}
+							XSSFFont font = cellStyle.getFont();
+							myCell.setTextSize(font.getFontHeightInPoints()+"");
+							if(font.getBold()) {
+								myCell.setTextWeight("bold");
+							}
+							else {
+								myCell.setTextWeight("normal");
+							}
+							
+							if(font.getItalic()) {
+								myCell.setFontStyle("italic");
+							}
+							else {
+								myCell.setFontStyle("normal");
+							}
+							
+							 if(font.getUnderline() == Font.U_SINGLE) {
+								myCell.setTextDecoration("underline");
+							}
+							else {
+								myCell.setTextDecoration("none");
+							}
+							
+							switch(cell.getCellTypeEnum()) {
+								case BOOLEAN: 
+									myCell.setContent(cell.getBooleanCellValue()+"");
+									break;
+								case STRING:
+									myCell.setContent(cell.getRichStringCellValue().getString());
+									break;
+								case NUMERIC:
+									if(DateUtil.isCellDateFormatted(cell)) {
+										myCell.setContent(cell.getDateCellValue()+"");
+									}
+									else {
+										myCell.setContent(cell.getNumericCellValue()+"");
+									}
+									break;
+								case FORMULA:
+									myCell.setContent(cell.getCellFormula());
+									break;
+								default: 
+									myCell.setContent("");
+									break;
+							}
+						}
+						else {
+							myCell.setContent("");
+						}
+						mySheet.get(currentRow).add(myCell);
+					}
+				}
+			}
+			int maxNrCols = mySheet.values().stream()
+			          .mapToInt(List::size)
+			          .max()
+			          .orElse(0);
+
+			        mySheet.values().stream()
+			          .filter(ls -> ls.size() < maxNrCols)
+			          .forEach(ls -> {
+			              IntStream.range(ls.size(), maxNrCols)
+			                .forEach(i -> ls.add(new MyCell("")));
+			});
+			return mySheet;
+		}
+		return null;
 	}
 
 }
