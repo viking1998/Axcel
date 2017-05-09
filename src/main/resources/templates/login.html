@@ -12,13 +12,13 @@
     <p th:if="${param.logout}" class="success">Logged out successfully!</p>
     <form th:action="@{/login}" method="post">
       <label for="username">Username</label>:
-      <input type="text" id="username" name="username" autofocus="autofocus" /> <br />
+      <input type="text" id="username" name="username" placeholder="Enter username" autofocus="autofocus" /> <br />
       <label for="password">Password</label>:
-      <input type="password" id="password" name="password" /> <br />
-      <input type="submit" value="Log in" />
+      <input type="password" id="password" name="password" placeholder="Enter password" /> <br />
+      <button type="submit">Log in</button>
     </form>
     <form th:action="@{/registration}" method="get">
-    	<input type="submit" value="Register"/>
+    	<button id="create" type="submit">Create an account</button>
     </form>
   </body>
 </html>
